@@ -1,0 +1,3 @@
+{
+	"mongoURI": "mongodb+srv://keens:nonuser@shibalink.vv2dk.gcp.mongodb.net/ShibaLink?retryWrites=true&w=majority"
+}
