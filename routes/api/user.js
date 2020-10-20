@@ -36,6 +36,7 @@ router.post(
 					.status(400)
 					.json({ errors: [{ msg: "User already exists." }] });
 			}
+
 			// Get users profile image
 			const avatar = gravatar.url(email, {
 				s: "200",
@@ -49,11 +50,15 @@ router.post(
 				avatar,
 				password
 			});
+
 			// Encrypt password
 			const salt = await bcrypt.genSalt(10);
 			user.password = await bcrypt.hash(password, salt);
+
+			// Save user in database (MongoDB)
 			await user.save();
 			res.send("User route");
+
 			// Return jsonwebtoken
 		} catch (err) {
 			console.error(err.message);
