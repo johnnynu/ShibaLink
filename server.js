@@ -8,6 +8,9 @@ connectDB();
 
 app.get("/", (req, res) => res.send("API working"));
 
+// Initialize Middleware
+app.use(express.json());
+
 // Routes
 app.use("/api/user", require("./routes/api/user"));
 app.use("/api/profile", require("./routes/api/profile"));
