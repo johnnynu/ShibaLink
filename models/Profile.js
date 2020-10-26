@@ -8,6 +8,10 @@ const ProfileSchema = mongoose.Schema({
 		type: mongoose.Schema.Types.ObjectId,
 		ref: "user"
 	},
+	breed: {
+		type: String,
+		required: true
+	},
 	location: {
 		type: String
 	},

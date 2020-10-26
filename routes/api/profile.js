@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const auth = require("../../middleware/auth");
+const { check, validationResult } = require("express-validator/check");
 
 const User = require("../../models/User");
 const Profile = require("../../models/Profile");
@@ -34,45 +35,54 @@ router.get("/me", auth, async (req, res) => {
 // @desc            Create or update user profile
 // @access          Private
 
-router.post("/", auth, async (req, res) => {
-	const { location, bio, instagramusername, instagram } = req.body;
-
-	// Build profile object
-	const profileFields = {};
-	profileFields.user = req.user.id;
-	if (location) profileFields.location = location;
-	if (bio) profileFields.bio = bio;
-	if (instagramusername) profileFields.instagramusername = instagramusername;
-
-	// Build social object
-	profileFields.socials = {};
-	if (instagram) profileFields.socials.instagram = instagram;
-
-	try {
-		// Find profile
-		let profile = await Profile.findOne({ user: req.user.id });
-
-		// If profile exists
-		if (profile) {
-			// Update profile
-			profile = await Profile.findOneAndUpdate(
-				{ user: req.user.id },
-				{ $set: profileFields },
-				{ new: true }
-			);
-			return res.json(profile);
+router.post(
+	"/",
+	[auth, [check("breed", "Breed of dog is required!").not().isEmpty()]],
+	async (req, res) => {
+		const errors = validationResult(req);
+		if (!errors.isEmpty()) {
+			return res.status(400).json({ errors: errors.array() });
 		}
+		const { breed, location, bio, instagramusername, instagram } = req.body;
 
-		// if profile does not exist => create
-		profile = new Profile(profileFields);
+		// Build profile object
+		const profileFields = {};
+		profileFields.user = req.user.id;
+		if (breed) profileFields.breed = breed;
+		if (location) profileFields.location = location;
+		if (bio) profileFields.bio = bio;
+		if (instagramusername) profileFields.instagramusername = instagramusername;
 
-		await profile.save();
-		res.json(profile);
-	} catch (err) {
-		console.error(err.message);
-		res.status(500).send("Server Error");
+		// Build social object
+		profileFields.socials = {};
+		if (instagram) profileFields.socials.instagram = instagram;
+
+		try {
+			// Find profile
+			let profile = await Profile.findOne({ user: req.user.id });
+
+			// If profile exists
+			if (profile) {
+				// Update profile
+				profile = await Profile.findOneAndUpdate(
+					{ user: req.user.id },
+					{ $set: profileFields },
+					{ new: true }
+				);
+				return res.json(profile);
+			}
+
+			// if profile does not exist => create
+			profile = new Profile(profileFields);
+
+			await profile.save();
+			res.json(profile);
+		} catch (err) {
+			console.error(err.message);
+			res.status(500).send("Server Error");
+		}
 	}
-});
+);
 
 // @route           GET api/profile
 // @desc            Get all profiles
@@ -111,6 +121,24 @@ router.get("/user/:user_id", async (req, res) => {
 				.status(400)
 				.json({ msg: "No matching profile found for the user specified :(" });
 		}
+		res.status(500).send("Server Error");
+	}
+});
+
+// @route           DELETE api/profile
+// @desc            Delete profile and user
+// @access          Private
+
+router.delete("/", auth, async (req, res) => {
+	try {
+		// Delete profile
+		await Profile.findOneAndRemove({ user: req.user.id });
+
+		// Delete user
+		await User.findOneAndRemove({ _id: req.user.id });
+		res.json({ msg: "User and Profile has been removed. " });
+	} catch (err) {
+		console.error(err.message);
 		res.status(500).send("Server Error");
 	}
 });
