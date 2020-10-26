@@ -74,4 +74,45 @@ router.post("/", auth, async (req, res) => {
 	}
 });
 
+// @route           GET api/profile
+// @desc            Get all profiles
+// @access          Public
+
+router.get("/", async (req, res) => {
+	try {
+		const profiles = await Profile.find().populate("user", ["name", "avatar"]);
+		res.json(profiles);
+	} catch (err) {
+		console.error(err.message);
+		res.status(500).send("Server Error");
+	}
+});
+
+// @route           GET api/profile/user/:user_id
+// @desc            Get a profile by userID
+// @access          Public
+
+router.get("/user/:user_id", async (req, res) => {
+	try {
+		const profile = await Profile.findOne({
+			user: req.params.user_id
+		}).populate("user", ["name", "avatar"]);
+
+		if (!profile)
+			return res
+				.status(400)
+				.json({ msg: "No matching profile found for the user specified." });
+
+		res.json(profile);
+	} catch (err) {
+		console.error(err.message);
+		if (err.kind == "ObjectId") {
+			return res
+				.status(400)
+				.json({ msg: "No matching profile found for the user specified :(" });
+		}
+		res.status(500).send("Server Error");
+	}
+});
+
 module.exports = router;
